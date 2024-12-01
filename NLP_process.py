@@ -1,30 +1,33 @@
-import os
-from transformers import pipeline
-import os
-import tensorflow as tf
+from transformers import BertTokenizer, BertForSequenceClassification
+from safetensors.torch import load_file
+import torch
+#定义情感标签
+id2label = {0: "积极", 1: "消极", 2: "中性", 3: "愤怒"}
+label2id = {v: k for k, v in id2label.items()}
 
-def get_emotion_classifier():
-    return pipeline(
-        "sentiment-analysis",
-        model="IDEA-CCNL/Erlangshen-Roberta-330M-Sentiment",  # 使用中文情绪分析模型
-    )
+#定义模型和分词器
+tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
+model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=4)
+model.config.id2label = id2label
+model.config.label2id = label2id
+
+model_path = "model.safetensors"
+try:
+    state_dict = load_file(model_path)
+    model.load_state_dict(state_dict)
+    print("模型权重加载成功。")
+except Exception as e:
+    print(f"模型权重加载失败: {e}")
+    exit()
 
 def analyze_emotion(text):
-    emotion_classifier = get_emotion_classifier()
-    result = emotion_classifier(text)
-    label = result[0]['label']
-    score = result[0]['score']
+    model.eval()
 
-    if label == "positive":
-        emotion = "积极"
-    elif label == "negative":
-        emotion = "消极"
-    else:
-        emotion = "中立"
-
+    #使用模型进行情感分析
+    inputs = tokenizer(text, return_tensors="pt", padding="max_length", max_length=128, truncation=True)
+    with torch.no_grad():
+        logits = model(**inputs).logits
+        predicted_class = torch.argmax(logits, dim=1).item()
+        score = torch.softmax(logits, dim=1).max().item()
+    emotion = id2label.get(predicted_class, "未知")
     return emotion, score
-
-if __name__ == "__main__":
-    user_input = input("请输入一句话进行情绪分析: ")
-    emotion, score = analyze_emotion(user_input)
-    print(f"分析结果: 情绪为{emotion}，置信度为{score:.2f}")
