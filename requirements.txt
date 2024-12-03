@@ -1,0 +1,11 @@
+openai
+python-docx
+transformers
+torch
+tensorflow
+opencv-python
+redis
+pandas
+matplotlib
+scikit-learn
+datasets
