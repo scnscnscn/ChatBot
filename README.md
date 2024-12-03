@@ -1,54 +1,60 @@
 # Chatbot
 
-Chatbot是一个基于零一万物的Yi-Lightning框架开发的聊天程序，集成了多种智能功能，包括人脸生物信息解锁、离屏检测、脏话识别、文档分析以及用户输入的语义分析。
+Chatbot is a conversational program developed based on the Yi-Lightning framework from Moonshot AI, integrating multiple intelligent features including facial biometric unlock, screen-off detection, profanity recognition, document analysis, and semantic analysis of user input.
 
-## 功能特点
+## Features
 
-- **人脸生物信息解锁**：利用先进的人脸识别技术，提供安全的身份验证。
-- **离屏检测**：能够检测用户是否在屏幕前，以优化交互体验。
-- **脏话识别**：自动检测并过滤不文明用语，保持交流环境的清洁。本地脏话字典实现
-- **文档分析**：分析指定目录下文档内容，提取关键信息。
-- **语义分析**：基于`simplifyweibo_4_moods.csv`训练的BERT模型，对用户输入进行深入的语义分析。
+- **Facial Biometric Unlock**: Utilizes advanced facial recognition technology to provide secure identity authentication.
+- **Screen-off Detection**: Detects whether the user is in front of the screen to optimize the interaction experience.
+- **Profanity Recognition**: Automatically detects and filters out offensive language to maintain a clean communication environment. Implemented with a local profanity dictionary.
+- **Document Analysis**: Analyzes the content of documents in a specified directory, extracting key information.
+- **Semantic Analysis**: Utilizes a BERT model trained on the `simplifyweibo_4_moods.csv` dataset to conduct in-depth semantic analysis of user input.
 
-## 语义分析模型
+## Semantic Analysis Model
 
-本项目的语义分析功能使用了基于`simplifyweibo_4_moods.csv`数据集训练的BERT模型。该模型能够理解用户输入的语境和情感，提供更精准的响应。
+The semantic analysis feature of this project uses a BERT model trained on the `simplifyweibo_4_moods.csv` dataset. This model can understand the context and emotions of user input, providing more accurate responses.
 
-## 测试集评估
+## Test Set Evaluation
 
-我们提供了程序来评估模型对给定测试集的效果。您可以使用这些工具来测试和验证模型的性能。
+We provide programs to evaluate the model's performance on given test sets. You can use these tools to test and verify the model's performance.
 
-## 微博热搜爬虫
+## Weibo Hot Search Crawler
 
-本项目还包含了一个微博热搜爬虫（redis），它可以爬取自定义数量的热搜话题下的评论。此外，还提供了一个能够根据本地字典过滤掉不需要内容的程序，以提高数据的质量和相关性。
+This project also includes a Weibo hot search crawler (redis) that can crawl comments under custom numbers of hot search topics. Additionally, a program is provided to filter out unwanted content based on a local dictionary, improving the quality and relevance of the data.
 
-## 安装指南
+## Installation Guide
 
-1. 确保您的环境中安装了Python 3.8或更高版本。
-2. 安装所需的依赖项：
+1. Ensure that Python 3.8 or higher is installed in your environment.
+2. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. 克隆项目代码到本地：
+3. Clone the project code to your local machine:
    ```bash
-   git clone https://github.com/yourusername/yi-lightning-chat-program.git
-   cd yi-lightning-chat-program
+   git clone https://github.com/scnscnscn/ChatBot.git 
    ```
-## 贡献
 
-我们欢迎任何形式的贡献，包括代码提交、文档改进、bug报告等。请遵循我们的[贡献指南](CONTRIBUTING.md)。
-##项目结构
+## Contribution
+
+We welcome any form of contribution, including code submissions, documentation improvements, bug reports, etc. Please follow our [Contribution Guidelines](CONTRIBUTING.md).
+
+## Project Structure
+```
 C:.
 ├─chatbot
-│  └─Documents（存放需要分析的文档）
+│  └─Documents（Directory for documents to be analyzed）
 ├─crawlers
 └─training
     ├─data
-    │  ├─test（较新的测试集）
-    │  └─train（公开但是较老的数据集）
+    │  ├─test（Recent test sets）
+    │  └─train（Public but older datasets）
     └─models
+```
 
-## 许可证
+## License
 
-本项目采用[MIT License](LICENSE)。
+This project is licensed under the [MIT License](LICENSE).
 
+---
+
+Please note that the link provided for cloning the project may not work due to network issues. If you encounter problems accessing the link, please check the legality of the web page link and try again. If the issue persists, it may be related to the link itself or network connectivity, and you may need to seek alternative methods to obtain the project code.
