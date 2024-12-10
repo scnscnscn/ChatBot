@@ -66,13 +66,14 @@ trainer = WeightedTrainer(
     tokenizer=tokenizer
 )
 
-# latest_checkpoint = "./results/checkpoint-xxxx"当程序中断时，可填入相应的检查点，从最新进度重新训练
+''' 
+latest_checkpoint = "./results/checkpoint-xxxx"当程序中断时，可填入相应的检查点，从最新进度重新训练
 
 if latest_checkpoint:
     print("恢复训练从检查点:", latest_checkpoint)
     trainer.train(resume_from_checkpoint=latest_checkpoint)
 else:
     trainer.train()
-
+'''
 model.save_pretrained('./sentiment_model')
 tokenizer.save_pretrained('./sentiment_model')

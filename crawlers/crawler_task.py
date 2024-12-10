@@ -12,10 +12,10 @@ class RedisUtil:
 
 
 class CrawlTask:
-    HOT_LIST_SIZE = 30  # 热搜数量
-    WB_LIST_SIZE = 20  # 每个热搜下微博数量
-    CM_LIST_SIZE = 50  # 每条微博评论页数
-    KEY_EXPIRE_TIME = 60 * 60  # Redis key过期时间（秒）
+    HOT_LIST_SIZE = 30
+    WB_LIST_SIZE = 20
+    CM_LIST_SIZE = 50
+    KEY_EXPIRE_TIME = 60 * 60
 
     def __init__(self):
         self.redis_conn = RedisUtil.get_redis_connection()

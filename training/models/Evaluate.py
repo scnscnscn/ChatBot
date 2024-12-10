@@ -5,15 +5,11 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
 import matplotlib
 
-# 设置中文字体
-matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei']  # Windows 系统下可以使用 'Microsoft YaHei'
-# matplotlib.rcParams['font.sans-serif'] = ['SimHei']  # 如果你在 macOS 或 Linux 上，可以尝试使用 'SimHei'
-matplotlib.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
-# 定义情感标签
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei']
+matplotlib.rcParams['axes.unicode_minus'] = False
 id2label = {0: "积极", 1: "消极", 2: "中性", 3: "愤怒"}
 label2id = {v: k for k, v in id2label.items()}
 
-# 定义模型和分词器
 print("加载BERT模型和分词器...")
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=4)
@@ -31,21 +27,17 @@ except Exception as e:
     print(f"模型权重加载失败: {e}")
     exit()
 
-# 加载测试数据
 print("加载测试数据集...")
-data_path = 'D:/VsCode/Code/Python/BigHomework/finalproject/training/data/train/usual_test_labeled4.csv'
+data_path = r'C:\Users\WLQVi\Desktop\python\finalproject\body\training\data\test\test.csv'
 try:
-    df = pd.read_csv(data_path, encoding='utf-8')  # 更改为适合你文件的编码
+    df = pd.read_csv(data_path, encoding='utf-8')
     print("CSV文件加载成功！")
 except Exception as e:
     print(f"加载CSV文件失败: {e}")
     exit()
 
-
-# 分析情感的函数
 def analyze_emotion(text):
     model.eval()
-    # 使用模型进行情感分析
     inputs = tokenizer(text, return_tensors="pt", padding="max_length", max_length=128, truncation=True)
     with torch.no_grad():
         logits = model(**inputs).logits
@@ -54,57 +46,79 @@ def analyze_emotion(text):
     emotion = id2label.get(predicted_class, "未知")
     return emotion, predicted_class
 
-
-# 用来存储模型预测和真实标签
 predictions = []
 true_labels = []
 
-# 对每一条测试数据进行分析
 print("开始对测试集进行情感分析...")
 for index, row in df.iterrows():
     text = row['文本']
     true_label = row['情绪标签']
 
-    # 获取预测情绪
     emotion, predicted_class = analyze_emotion(text)
 
-    # 保存预测结果和真实标签
     predictions.append(predicted_class)
     true_labels.append(label2id.get(true_label, -1))
 
-# 计算正确率
 accuracy = accuracy_score(true_labels, predictions)
 print(f"模型在测试集上的准确率: {accuracy * 100:.2f}%")
 
-# 将情感分析结果写入第三列
 print("将预测结果写入到CSV文件...")
 df['预测情绪'] = [id2label.get(pred, "未知") for pred in predictions]
 
-# 保存带预测结果的文件
-df.to_csv('D:/VsCode/Code/Python/BigHomework/finalproject/training/data/usual_test_labeled_with_predictions.csv', index=False)
+df.to_csv('usual_test_labeled_with_predictions.csv', index=False)
 print("预测结果已保存到 'usual_test_labeled_with_predictions.csv'")
 
-# 绘制正确率可视化图（混淆矩阵）
-print("开始绘制混淆矩阵...")
 
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
 
-# 计算混淆矩阵
-cm = confusion_matrix(true_labels, predictions, labels=[0, 1, 2, 3])
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
+import numpy as np
 
-# 清理掉全零行和全零列
-cm_cleaned = cm[(cm != 0).any(axis=1)]  # 删除全零行
-cm_cleaned = cm_cleaned[:, (cm_cleaned != 0).any(axis=0)]  # 删除全零列
+def analyze_emotion(text):
+    model.eval()
+    inputs = tokenizer(text, return_tensors="pt", padding="max_length", max_length=128, truncation=True)
+    with torch.no_grad():
+        logits = model(**inputs).logits
+        probabilities = torch.softmax(logits, dim=1).cpu().numpy()[0]  # 获取概率分布
+        predicted_class = torch.argmax(logits, dim=1).item()
+    emotion = id2label.get(predicted_class, "未知")
+    return emotion, predicted_class, probabilities
 
-# 可视化混淆矩阵
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm_cleaned, annot=True, fmt="d", cmap="Blues", xticklabels=id2label.values(), yticklabels=id2label.values())
-plt.xlabel('Predicted Label')
-plt.ylabel('True Label')
-plt.title('Confusion Matrix of Sentiment Analysis Model')
+predictions_prob = []
+true_labels = []
+
+for index, row in df.iterrows():
+    text = row['文本']
+    true_label = row['情绪标签']
+    emotion, predicted_class, probabilities = analyze_emotion(text)
+    predictions_prob.append(probabilities)
+    true_labels.append(label2id.get(true_label, -1))
+
+true_labels_binarized = label_binarize(true_labels, classes=[0, 1, 2, 3])
+
+n_classes = 4
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+for i in range(n_classes):
+    fpr[i], tpr[i], _ = roc_curve(true_labels_binarized[:, i], np.array(predictions_prob)[:, i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+
+plt.figure()
+colors = ['aqua', 'darkorange', 'cornflowerblue', 'green']
+for i, color in zip(range(n_classes), colors):
+    plt.plot(fpr[i], tpr[i], color=color, lw=2,
+             label='ROC curve of class {0} (area = {1:0.2f})'
+             ''.format(i, roc_auc[i]))
+
+plt.plot([0, 1], [0, 1], 'k--', lw=2)
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic for multi-class')
+plt.legend(loc="lower right")
 plt.show()
-
 print("混淆矩阵已绘制完成。")
 
 

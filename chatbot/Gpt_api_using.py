@@ -1,6 +1,4 @@
 import openai
-from Doc_reading import read_docx_files
-
 
 class GptAssistant:
 
@@ -26,13 +24,3 @@ class GptAssistant:
             # 捕捉异常并返回错误信息
             return f"Error: {e}"
 
-    def analyze_documents(self, directory_path):
-
-        # 使用read_docx_files读取文件内容
-        file_contents = read_docx_files(directory_path)
-
-        # 遍历每个文件，进行内容分析
-        for filename, content in file_contents.items():
-            # 发送请求让GPT总结内容
-            summary = self.chat(f"帮我总结如下内容：{content}")
-            print(f"{filename} - Summary:\n{summary}")
