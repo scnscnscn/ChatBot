@@ -1,11 +1,9 @@
 from transformers import BertTokenizer, BertForSequenceClassification
 from safetensors.torch import load_file
 import torch
-#定义情感标签
 id2label = {0: "积极", 1: "消极", 2: "中性", 3: "愤怒"}
 label2id = {v: k for k, v in id2label.items()}
 
-#定义模型和分词器
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=4)
 model.config.id2label = id2label
@@ -23,7 +21,6 @@ except Exception as e:
 def analyze_emotion(text):
     model.eval()
 
-    #使用模型进行情感分析
     inputs = tokenizer(text, return_tensors="pt", padding="max_length", max_length=128, truncation=True)
     with torch.no_grad():
         logits = model(**inputs).logits

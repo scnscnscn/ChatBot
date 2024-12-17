@@ -2,7 +2,8 @@ import pandas as pd
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
+import seaborn as sns
 import matplotlib
 
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei']
@@ -44,20 +45,22 @@ def analyze_emotion(text):
         predicted_class = torch.argmax(logits, dim=1).item()
         score = torch.softmax(logits, dim=1).max().item()
     emotion = id2label.get(predicted_class, "未知")
-    return emotion, predicted_class
+    return emotion, predicted_class, logits
 
 predictions = []
 true_labels = []
+all_logits = []
 
 print("开始对测试集进行情感分析...")
 for index, row in df.iterrows():
     text = row['文本']
     true_label = row['情绪标签']
 
-    emotion, predicted_class = analyze_emotion(text)
+    emotion, predicted_class, logits = analyze_emotion(text)
 
     predictions.append(predicted_class)
     true_labels.append(label2id.get(true_label, -1))
+    all_logits.append(logits.numpy())
 
 accuracy = accuracy_score(true_labels, predictions)
 print(f"模型在测试集上的准确率: {accuracy * 100:.2f}%")
@@ -68,57 +71,34 @@ df['预测情绪'] = [id2label.get(pred, "未知") for pred in predictions]
 df.to_csv('usual_test_labeled_with_predictions.csv', index=False)
 print("预测结果已保存到 'usual_test_labeled_with_predictions.csv'")
 
+# 绘制混淆矩阵
+cm = confusion_matrix(true_labels, predictions)
+plt.figure(figsize=(10, 7))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=id2label.values(), yticklabels=id2label.values())
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.title('Confusion Matrix')
+plt.show()
+print("混淆矩阵已绘制完成。")
 
+# 绘制ROC曲线
+fpr = {}
+tpr = {}
+roc_auc = {}
 
-from sklearn.metrics import roc_curve, auc
-from sklearn.preprocessing import label_binarize
-import numpy as np
-
-def analyze_emotion(text):
-    model.eval()
-    inputs = tokenizer(text, return_tensors="pt", padding="max_length", max_length=128, truncation=True)
-    with torch.no_grad():
-        logits = model(**inputs).logits
-        probabilities = torch.softmax(logits, dim=1).cpu().numpy()[0]  # 获取概率分布
-        predicted_class = torch.argmax(logits, dim=1).item()
-    emotion = id2label.get(predicted_class, "未知")
-    return emotion, predicted_class, probabilities
-
-predictions_prob = []
-true_labels = []
-
-for index, row in df.iterrows():
-    text = row['文本']
-    true_label = row['情绪标签']
-    emotion, predicted_class, probabilities = analyze_emotion(text)
-    predictions_prob.append(probabilities)
-    true_labels.append(label2id.get(true_label, -1))
-
-true_labels_binarized = label_binarize(true_labels, classes=[0, 1, 2, 3])
-
-n_classes = 4
-fpr = dict()
-tpr = dict()
-roc_auc = dict()
-for i in range(n_classes):
-    fpr[i], tpr[i], _ = roc_curve(true_labels_binarized[:, i], np.array(predictions_prob)[:, i])
+for i in range(len(id2label)):
+    fpr[i], tpr[i], _ = roc_curve([1 if label == i else 0 for label in true_labels], [logit[i] for logit in all_logits])
     roc_auc[i] = auc(fpr[i], tpr[i])
 
-plt.figure()
-colors = ['aqua', 'darkorange', 'cornflowerblue', 'green']
-for i, color in zip(range(n_classes), colors):
-    plt.plot(fpr[i], tpr[i], color=color, lw=2,
-             label='ROC curve of class {0} (area = {1:0.2f})'
-             ''.format(i, roc_auc[i]))
-
-plt.plot([0, 1], [0, 1], 'k--', lw=2)
+plt.figure(figsize=(10, 7))
+for i in range(len(id2label)):
+    plt.plot(fpr[i], tpr[i], label=f'ROC curve (area = {roc_auc[i]:.2f}) for class {id2label[i]}')
+plt.plot([0, 1], [0, 1], 'k--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic for multi-class')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
 plt.legend(loc="lower right")
 plt.show()
-print("混淆矩阵已绘制完成。")
-
-
+print("ROC曲线已绘制完成。")

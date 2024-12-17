@@ -23,6 +23,7 @@ setup(
         'matplotlib',
         'scikit-learn',
         'datasets'
+        'PyQt5',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
